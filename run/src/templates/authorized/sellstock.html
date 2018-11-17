@@ -18,7 +18,7 @@
 
   <body>
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Web-Trader</a>
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="/">Web-Trader</a>
       <ul class="navbar-nav px-3">
         <li class="nav-item text-nowrap">
           <a class="nav-link" href="/logout">Log out</a>
@@ -35,6 +35,13 @@
                 <a class="nav-link" href="/dashboard">
                   <span data-feather="home"></span>
                   Dashboard <span class="sr-only"></span>
+                </a>
+              </li>
+              <br>
+              <li class="nav-item">
+                <a class="nav-link" href="/addfunds">
+                  <span data-feather="plus-circle"></span>
+                  Add Funds <span class="sr-only"></span>
                 </a>
               </li>
               <br>
@@ -84,37 +91,36 @@
                 <button class="btn btn-sm btn-outline-secondary">Share</button>
                 <button class="btn btn-sm btn-outline-secondary">Export</button>
               </div>
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle">
-                <span data-feather="calendar"></span>
-                This week
-              </button>
             </div>
           </div>
-          <form action="/buystock" method="post">
-            <input type="text" name="ticker" class="form-control" placeholder="Stock ticker" required autofocus>
-            <input type="text" name="volume" class="form-control" placeholder="Shares to purchase" required autofocus>
+          <form action="/sellstock" method="post" autocomplete="off">
+            <input type="text" name="ticker" class="form-control" style="text-align: center" placeholder="Stock ticker">
             <br>
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="modal">Buy Stock</button> 
-                  <!-- Modal -->
-                <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                    <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        Are you sure you want to execute this trade?
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                        <button type="submit" class="btn btn-primary" data-dismiss="modal">Yes</button>
-                    </div>
-                    </div>
-                </div>
-                </div>
+            <input type="text" name="volume" class="form-control" style="text-align: center" placeholder="Shares to sell">
+            <br>
+            <div class="text-center">
+              <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal">Sell Stock</button>
+            </div>
+                <!-- Modal -->
+              <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                  <div class="modal-header">
+                      <h5 class="modal-title" id="exampleModalLongTitle">Execute Sale</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                      </button>
+                  </div>
+                  <div class="modal-body">
+                      Are you sure you want to execute this trade?
+                  </div>
+                  <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                      <button type="submit" class="btn btn-primary" >Yes</button>
+                  </div>
+                  </div>
+              </div>
+              </div>
           </form>
             <br>
             <h3 class="text-center" style="color:red">{{ message }}</h3>
@@ -167,6 +173,9 @@
           }
         }
       });
+    </script>
+    <script>
+        $('#modal').modal(options)
     </script>
   </body>
 </html>

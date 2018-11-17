@@ -18,7 +18,7 @@
 
   <body>
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Web-Trader</a>
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="/">Web-Trader</a>
       <ul class="navbar-nav px-3">
         <li class="nav-item text-nowrap">
           <a class="nav-link" href="/logout">Log out</a>
@@ -35,6 +35,13 @@
                 <a class="nav-link" href="/dashboard">
                   <span data-feather="home"></span>
                   Dashboard <span class="sr-only"></span>
+                </a>
+              </li>
+              <br>
+              <li class="nav-item">
+                <a class="nav-link" href="/addfunds">
+                  <span data-feather="plus-circle"></span>
+                  Add Funds <span class="sr-only"></span>
                 </a>
               </li>
               <br>
@@ -84,23 +91,100 @@
                 <button class="btn btn-sm btn-outline-secondary">Share</button>
                 <button class="btn btn-sm btn-outline-secondary">Export</button>
               </div>
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle">
-                <span data-feather="calendar"></span>
-                This week
-              </button>
             </div>
           </div>
-          <table>
-          {% for item in alltrades %}
-          <TR>
-            <TD class="c1"><IMG src="favicon.ico"></TD>
-            <TD class="c2">{{item.ticker}}</TD>
-            <TD class="c3">{{item.price}}</TD>
-            <TD class="c4"><SPAN>{{item.volume}}</SPAN></TD>
-            <TD class="c5"><SPAN>{{item.time}}</SPAN></TD>
-          </TR>
-          {% endfor %}
-          </table>
+          {% if trades and not message %}
+          <form action=/seetrades method="post">
+            <input type="text" name="ticker" class="form-control" placeholder="Stock Ticker" required autofocus>
+            <br>
+            <div class="text-center">
+              <button class="btn btn-primary" type="submit">Filter Trades</button>
+            </div>
+            <br>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-striped table-sm">
+            <thead>
+              <tr>
+                <th class="text-center">Ticker</th>
+                <th class="text-center">Price</th>
+                <th class="text-center">Volume</th>
+                <th class="text-center">Total Value</th>
+                <th class="text-center">Time</th>
+                <th class="text-center">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for i in length %}
+            <tr>
+              <td class="text-center">{{ trades["tickers"][i] }}</td>
+              <td class="text-center">{{ trades["prices"][i] }}</td>
+              {% if trades["volumes"][i] > 0 %}
+              <td class="text-center">+{{ trades["volumes"][i] }} shares</td>
+              {% elif 0 > trades["volumes"][i] %}
+              <td class="text-center">{{ trades["volumes"][i] }} shares</td>
+              {% endif %}
+              <td class="text-center">{{ trades["values"][i] }}</td>
+              <td class="text-center">{{ trades["times"][i] }}</td>
+              {% if trades["volumes"][i] > 0 %}
+                <td class="text-center">Buy</td>
+              {% elif 0 > trades["volumes"][i] %}
+                <td class="text-center">Sell</td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+          </div>
+          {% endif %}
+          {% if trades and message %}
+          <form action=/seetrades method="post">
+            <input type="text" name="ticker" class="form-control" placeholder="Stock Ticker" required autofocus>
+            <br>
+            <div class="text-center">
+              <button class="btn btn-primary" type="submit">Filter Trades</button>
+            </div>
+            <br>
+            <p class="text-center" style="color:red">{{ message }}</p>
+          </form>
+          <div class="table-responsive">
+            <table class="table table-striped table-sm">
+            <thead>
+              <tr>
+                <th class="text-center">Ticker</th>
+                <th class="text-center">Price</th>
+                <th class="text-center">Volume</th>
+                <th class="text-center">Total Value</th>
+                <th class="text-center">Time</th>
+                <th class="text-center">Type</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for i in length %}
+            <tr>
+              <td class="text-center">{{ trades["tickers"][i] }}</td>
+              <td class="text-center">{{ trades["prices"][i] }}</td>
+              {% if trades["volumes"][i] > 0 %}
+              <td class="text-center">+{{ trades["volumes"][i] }} shares</td>
+              {% elif 0 > trades["volumes"][i] %}
+              <td class="text-center">{{ trades["volumes"][i] }} shares</td>
+              {% endif %}
+              <td class="text-center">{{ trades["values"][i] }}</td>
+              <td class="text-center">{{ trades["times"][i] }}</td>
+              {% if trades["volumes"][i] > 0 %}
+                <td class="text-center">Buy</td>
+              {% elif 0 > trades["volumes"][i] %}
+                <td class="text-center">Sell</td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+          </div>
+          {% endif %}
+          {% if not trades and message %}
+            <p style="color:red">{{ message }}</p>
+          {% endif %}
         </main>
       </div>
     </div>

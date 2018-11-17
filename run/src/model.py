@@ -150,7 +150,7 @@ class Account:
         with OpenCursor() as cur:
             SQL = """
             SELECT * FROM accounts WHERE username=? AND pass_hash=?"""
-            cur.execute(SQL, (username, calculate_hash(password)))
+            cur.execute(SQL, (username, password))
             row = cur.fetchone()
             if not row:
                 return self

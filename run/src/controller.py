@@ -2,6 +2,12 @@
 
 from flask import Flask, session, url_for, render_template, request, redirect
 import model
+import locale
+from datetime import datetime
+import tzlocal
+
+local_timezone = tzlocal.get_localzone()
+locale.setlocale(locale.LC_ALL, 'en_US')
 
 app = Flask(__name__)
 app.secret_key = b'thesessionneedsthis'
@@ -21,8 +27,7 @@ def login():
         user = model.Account()
         username = request.form["username"]
         password = model.calculate_hash(request.form["password"])
-        if not user.set_from_credentials(username, password):
-            print("account not found")
+        if not user.set_from_credentials(username=username, password=password):
             return render_template('unauthorized/login.html', message="Incorrect username or password")
         user.set_from_credentials(username=username, password=password)
         session["Active User"] = user.pk
@@ -49,11 +54,15 @@ def createaccount():
 
 @app.route('/dashboard', methods=["GET"])
 def show_dashboard():
-    return render_template('authorized/dashboard.html')
+    user = model.Account()
+    user.set_from_pk(session["Active User"])
+    balance = '${:,.2f}'.format(user.balance)
+    return render_template('authorized/dashboard.html', balance=balance)
 
 @app.route('/addfunds', methods=["GET","POST"])
 def add_funds():
-    user = session["Active User"]
+    user = model.Account()
+    user.set_from_pk(session["Active User"])
     if request.method == "GET":
         return render_template('authorized/addfunds.html')
     elif request.method == "POST":
@@ -65,12 +74,21 @@ def add_funds():
         amount = request.form["amount"]
         if amount[0] == "$":
             amount == amount[1:]
-            try:
-                amount = float(amount)
-            except ValueError:
+        try:
+            amount = float(amount)
+            if amount < 0.01:
                 return render_template('authorized/addfunds.html', message="Invalid input, must be a positive number")
+        except ValueError:
+            return render_template('authorized/addfunds.html', message="Invalid input, must be a positive number")
         user.increase_balance(amount)
-    return redirect("/dashboard")
+    return redirect(url_for('deposit_success'))
+
+@app.route('/depositsuccess', methods=["GET"])
+def deposit_success():
+    user=model.Account()
+    user.set_from_pk(session["Active User"])
+    balance = '${:,.2f}'.format(user.balance)
+    return render_template('authorized/depositsuccess.html', balance=balance)
 
 @app.route('/getprice', methods=["GET","POST"])
 def get_price():
@@ -82,7 +100,7 @@ def get_price():
         price = model.apiget(ticker)
         if not price:
             return render_template('authorized/getprice.html', message="Stock doesn't exist")
-        return render_template('authorized/getprice.html', price="The current price of {} is $".format(ticker)+str(price))
+        return render_template('authorized/getprice.html', price='${:,.2f}'.format(price), ticker=model.ticker_cap(ticker))
 
 @app.route('/buystock', methods=["GET","POST"])
 def buy_stock():
@@ -108,14 +126,15 @@ def buy_stock():
         if not balance_check:
             return render_template('authorized/buystock.html', message="Insufficient funds")
         user.buy(ticker, volume, price=price)
-        return redirect('/tradesuccess')        
+        return redirect(url_for('trade_success'))      
 
 @app.route('/sellstock', methods=["GET","POST"])
 def sell_stock():
     if request.method == "GET":
         return render_template('authorized/sellstock.html')
     elif request.method == "POST":
-        user = session["Active User"]
+        user = model.Account()
+        user.set_from_pk(session["Active User"])
         ticker = model.ticker_cap(request.form["ticker"])
         price = model.apiget(ticker)
         if not price:
@@ -134,7 +153,7 @@ def sell_stock():
         if not user.sufficient_amount_check(ticker, volume):
             return render_template('authorized/sellstock.html', message="Insufficient amount owned")
         user.sell(ticker, volume, price=price)
-        return redirect('/tradesuccess')  
+        return redirect(url_for('trade_success')) 
 
 @app.route('/tradesuccess', methods=["GET"])
 def trade_success():
@@ -143,35 +162,41 @@ def trade_success():
     trade = user.getlasttrade()
     ticker = trade.ticker
     position = user.getposition(ticker=ticker)
-    return render_template('authorized/tradesuccess.html', ticker=ticker, price=trade.price*trade.volume, amount=position.amount, value=trade.price*position.amount, time=trade.time)
+    if not position:
+        return render_template('authorized/tradesuccess.html', message="Position closed out")
+    return render_template('authorized/tradesuccess.html', ticker=ticker, price='${:,.2f}'.format(abs(trade.price*trade.volume)), amount=position.amount, value='${:,.2f}'.format(trade.price*position.amount), time=str(datetime.fromtimestamp(trade.time, local_timezone))[0:-6])
 
 @app.route('/seetrades', methods=["GET","POST"])
 def see_trades():
     user = model.Account()
     user.set_from_pk(session["Active User"])
     alltrades = user.gettrades()
-    # trades = {}
-    # trades["tickers"] = [i.ticker for i in alltrades]
-    # trades["prices"] = [i.price for i in alltrades]
-    # trades["volumes"] = [i.volume for i in alltrades]
-    # trades["times"] = [i.time for i in alltrades]
+    trades = {}
+    trades["tickers"] = [i.ticker for i in alltrades]
+    trades["prices"] = ['${:,.2f}'.format(i.price) for i in alltrades]
+    trades["volumes"] = [i.volume for i in alltrades]
+    trades["values"] = ['${:,.2f}'.format((i.price*i.volume)) for i in alltrades]
+    trades["times"] = [str(datetime.fromtimestamp(i.time, local_timezone))[0:-6] for i in alltrades]
+    length = range(0,len(trades["tickers"]))
     if request.method == "GET":
         if not alltrades:
             return render_template('authorized/seetrades.html', message="No trade history. Try buying some stock!")
-        return render_template('authorized/seetrades.html', alltrades=alltrades)
+        return render_template('authorized/seetrades.html', trades=trades, length=length)
     if request.method == "POST":
         ticker = request.form["ticker"]
         if not model.apiget(ticker):
-            return render_template('authorized/seetrades.html', message="Stock doesn't exist")
+            return render_template('authorized/seetrades.html', trades=trades, length=length, message="Stock doesn't exist")
         if not user.gettradesfor(ticker):
-            return render_template('authorized/seetrades.html', message="No trades exist for that stock")
+            return render_template('authorized/seetrades.html', trades=trades, length=length, message="No trades exist for that stock")
         alltrades = user.gettradesfor_html(ticker)
         trades = {}
         trades["tickers"] = [i.ticker for i in alltrades]
-        trades["prices"] = [i.price for i in alltrades]
+        trades["prices"] = ['${:,.2f}'.format(i.price) for i in alltrades]
         trades["volumes"] = [i.volume for i in alltrades]
-        trades["times"] = [i.time for i in alltrades]
-        return render_template("authorized/seetrades.html", alltrades=alltrades)
+        trades["values"] = [ '${:,.2f}'.format((i.price*i.volume)) for i in alltrades]
+        trades["times"] = [str(datetime.fromtimestamp(i.time, local_timezone))[0:-6] for i in alltrades]
+        length = range(0,len(trades["tickers"]))
+        return render_template("authorized/seetrades.html", trades=trades, length=length)
 
 @app.route('/viewportfolio', methods=["GET","POST"])
 def view_portfolio():
@@ -181,15 +206,17 @@ def view_portfolio():
     positions = {}
     positions["tickers"] = [i.ticker for i in allpositions]
     positions["amounts"] = [i.amount for i in allpositions]
-    positions["values"] = [round(i.amount*model.apiget(i.ticker),2) for i in allpositions]
-    positions["total value"] = int(sum(positions["values"]))
-    return render_template('authorized/viewportfolio.html', positions=positions)
+    positions["values"] = ['${:,.2f}'.format(i.amount*model.apiget(i.ticker)) for i in allpositions]
+    positions["total value"] = sum([(i.amount*model.apiget(i.ticker)) for i in allpositions])
+    total_value = '${:,.2f}'.format(positions["total value"])
+    length = range(0,len(positions["tickers"]))
+    return render_template('authorized/viewportfolio.html', positions=positions, length=length, total_value=total_value)
 
     
 @app.route('/logout', methods=["GET"])
 def logout():
     session.pop("Active User")
-    return redirect('/login')
+    return redirect(url_for('login'))
         
 
 

@@ -38,6 +38,10 @@ SQL = """INSERT INTO trades(account_pk, ticker, volume, price, time)
 VALUES(?, ?, ?, ?, ?);"""
 cur.execute(SQL, (1, "F", 50, 300.0, int(time())))
 
+SQL = """INSERT INTO trades(account_pk, ticker, volume, price, time) 
+VALUES(?, ?, ?, ?, ?);"""
+cur.execute(SQL, (1, "F", -50, 300.0, int(time())))
+
 conn.commit()
 cur.close()
 conn.close()

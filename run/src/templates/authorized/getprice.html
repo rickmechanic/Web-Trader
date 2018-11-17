@@ -18,7 +18,7 @@
 
   <body>
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Web-Trader</a>
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="/">Web-Trader</a>
       <ul class="navbar-nav px-3">
         <li class="nav-item text-nowrap">
           <a class="nav-link" href="/logout">Log out</a>
@@ -35,6 +35,13 @@
                 <a class="nav-link" href="/dashboard">
                   <span data-feather="home"></span>
                   Dashboard <span class="sr-only">(current)</span>
+                </a>
+              </li>
+              <br>
+              <li class="nav-item">
+                <a class="nav-link" href="/addfunds">
+                  <span data-feather="plus-circle"></span>
+                  Add Funds <span class="sr-only"></span>
                 </a>
               </li>
               <br>
@@ -78,25 +85,28 @@
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h1 class="h2">Your Trade History</h1>
+            <h1 class="h2">Get Stock Quote</h1>
             <div class="btn-toolbar mb-2 mb-md-0">
               <div class="btn-group mr-2">
                 <button class="btn btn-sm btn-outline-secondary">Share</button>
                 <button class="btn btn-sm btn-outline-secondary">Export</button>
               </div>
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle">
-                <span data-feather="calendar"></span>
-                This week
-              </button>
             </div>
           </div>
-          <form action="/getprice" method="post">
-            <input type="text" name="ticker" id="username" class="form-control" placeholder="Stock Ticker" required autofocus>
-            <button class="btn btn-lg btn-primary" type="submit">Get Price</button>
+          <form action="/getprice" method="post" autocomplete="off">
+            <input type="text" style="text-align: center" name="ticker" id="username" class="form-control" placeholder="Stock Ticker" required autofocus>
+            <br>
+            <div class="text-center">
+              <button class="btn btn-primary" type="submit">Get Price</button>
+            </div>
           </form>
             <br>
-            <h3 class="text-center" style="color:red">{{ message }}</h3>
-            <h3 class="text-center" style="color:black">{{ price }}</h3>
+            {% if message %}
+              <h3 class="text-center" style="color:red">{{ message }}</h3>
+            {% endif %}
+            {% if ticker %}
+              <h3 class="text-center"><span style="color:black">The current price of {{ ticker }} is:</span>&nbsp;<span style="color:green">{{ price }}</span></h2>
+            {% endif %}
         </main>
       </div>
     </div>
