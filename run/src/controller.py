@@ -57,7 +57,16 @@ def show_dashboard():
     user = model.Account()
     user.set_from_pk(session["Active User"])
     balance = '${:,.2f}'.format(user.balance)
-    return render_template('authorized/dashboard.html', balance=balance)
+    allpositions = user.getpositions_html()
+    positions = {}
+    positions["tickers"] = [i.ticker for i in allpositions]
+    positions["amounts"] = [i.amount for i in allpositions]
+    positions["values"] = ['${:,.2f}'.format(i.amount*model.apiget(i.ticker)) for i in allpositions]
+    positions["total value"] = sum([(i.amount*model.apiget(i.ticker)) for i in allpositions])
+    total_value = '${:,.2f}'.format(positions["total value"])
+    length = range(0,len(positions["tickers"]))
+
+    return render_template('authorized/dashboard.html', balance=balance, length=length, positions=positions, total_value=total_value)
 
 @app.route('/addfunds', methods=["GET","POST"])
 def add_funds():
@@ -212,12 +221,14 @@ def view_portfolio():
     length = range(0,len(positions["tickers"]))
     return render_template('authorized/viewportfolio.html', positions=positions, length=length, total_value=total_value)
 
-    
 @app.route('/logout', methods=["GET"])
 def logout():
     session.pop("Active User")
     return redirect(url_for('login'))
-        
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("unauthorized/404.html")   
 
 
 

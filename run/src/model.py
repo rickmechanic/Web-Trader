@@ -121,9 +121,8 @@ class Account:
                 INSERT INTO accounts(username, pass_hash, balance, type)
                 VALUES(?, ?, ?, ?);
                 """
-                cur.execute(SQL, (self.username, self.pass_hash, self.balance, self.acct_type))
+                cur.execute(SQL, (self.username, self.pass_hash, 0.00, self.acct_type))
                 self.pk = cur.lastrowid
-
             else:
                 SQL = """
                 UPDATE accounts SET username=?, pass_hash=?, balance=?, type=? WHERE
